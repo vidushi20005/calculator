@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>90s Hindi Music Player</title>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      background: linear-gradient(135deg, #ff9a9e, #fad0c4);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      color: white;
+    }
+    .player {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 20px;
+      border-radius: 15px;
+      text-align: center;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      width: 320px;
+    }
+    .player img {
+      width: 200px;
+      height: 200px;
+      border-radius: 15px;
+      object-fit: cover;
+      margin-bottom: 10px;
+    }
+    .controls button {
+      background: rgba(255, 255, 255, 0.3);
+      border: none;
+      font-size: 20px;
+      margin: 0 10px;
+      border-radius: 50%;
+      width: 45px;
+      height: 45px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    .controls button:hover {
+      background: rgba(255, 255, 255, 0.6);
+      transform: scale(1.1);
+    }
+    .progress-container {
+      width: 100%;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 5px;
+      margin-top: 15px;
+      cursor: pointer;
+    }
+    .progress {
+      height: 6px;
+      background: #ff6ec7;
+      width: 0%;
+      border-radius: 5px;
+    }
+    .volume {
+      margin-top: 10px;
+      width: 100%;
+    }
+    input[type=range] {
+      width: 100%;
+      cursor: pointer;
+      accent-color: #ff6ec7;
+    }
+    .playlist-container {
+      margin-top: 20px;
+      width: 320px;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 15px;
+      border-radius: 10px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      max-height: 180px;
+      overflow-y: auto;
+    }
+    .playlist-container h3 {
+      margin: 0;
+      font-size: 18px;
+      color: white;
+      text-align: center;
+    }
+    .playlist li {
+      list-style: none;
+      padding: 8px;
+      margin-bottom: 5px;
+      cursor: pointer;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+    }
+    .playlist li:hover {
+      background: rgba(255, 110, 199, 0.4);
+    }
+  </style>
+</head>
+<body>
+
+<div class="player">
+  <img id="cover" src="" alt="cover">
+  <h2 id="title">Title</h2>
+  <h3 id="artist">Artist</h3>
+  <audio id="audio" controls></audio>
+
+  <div class="progress-container" id="progress-container">
+    <div class="progress" id="progress"></div>
+  </div>
+
+  <div style="margin-top: 5px; display: flex; justify-content: space-between;">
+    <span id="current">0:00</span>
+    <span id="duration">0:00</span>
+  </div>
+
+  <div class="controls">
+    <button id="prev">⏮️</button>
+    <button id="play">▶️</button>
+    <button id="next">⏭️</button>
+  </div>
+
+  <input type="range" id="volume" class="volume" min="0" max="1" step="0.01" value="0.7">
+</div>
+
+<div class="playlist-container">
+  <h3>Playlist</h3>
+  <ul class="playlist" id="playlist"></ul>
+</div>
+
+<script>
+const songs = [
+  {
+    title: "Lag Ja Gale",
+    artist: "Lata Mangeshkar",
+    src: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
+    cover: "https://i.scdn.co/image/ab67616d0000b27388b75d86f98eec4b6a75a4a3"
+  },
+  {
+    title: "Pal Pal Dil Ke Paas",
+    artist: "Kishore Kumar",
+    src: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
+    cover: "https://i.scdn.co/image/ab67616d0000b2738f37b0dc95d1b1b48dbe9a9e"
+  },
+  {
+    title: "Tere Bina Zindagi Se",
+    artist: "Lata & Kishore",
+    src: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3",
+    cover: "https://i.scdn.co/image/ab67616d0000b2733e2142ef3645dcf8e2f92b80"
+  },
+  {
+    title: "Yeh Shaam Mastani",
+    artist: "Kishore Kumar",
+    src: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3",
+    cover: "https://i.scdn.co/image/ab67616d0000b2738f37b0dc95d1b1b48dbe9a9e"
+  }
+];
+
+let songIndex = 0;
+let isPlaying = false;
+
+const audio = document.getElementById("audio");
+const playBtn = document.getElementById("play");
+const nextBtn = document.getElementById("next");
+const prevBtn = document.getElementById("prev");
+const titleEl = document.getElementById("title");
+const artistEl = document.getElementById("artist");
+const cover = document.getElementById("cover");
+const progressContainer = document.getElementById("progress-container");
+const progress = document.getElementById("progress");
+const currentTimeEl = document.getElementById("current");
+const durationEl = document.getElementById("duration");
+const volume = document.getElementById("volume");
+const playlistEl = document.getElementById("playlist");
+
+function loadSong(song) {
+  titleEl.textContent = song.title;
+  artistEl.textContent = song.artist;
+  audio.src = song.src;
+  cover.src = song.cover;
+}
+
+function playSong() {
+  isPlaying = true;
+  audio.play();
+  playBtn.textContent = "⏸️";
+}
+
+function pauseSong() {
+  isPlaying = false;
+  audio.pause();
+  playBtn.textContent = "▶️";
+}
+
+function nextSong() {
+  songIndex = (songIndex + 1) % songs.length;
+  loadSong(songs[songIndex]);
+  playSong();
+}
+
+function prevSong() {
+  songIndex = (songIndex - 1 + songs.length) % songs.length;
+  loadSong(songs[songIndex]);
+  playSong();
+}
+
+function updateProgress(e) {
+  if (audio.duration) {
+    const progressPercent = (audio.currentTime / audio.duration) * 100;
+    progress.style.width = `${progressPercent}%`;
+
+    const curMin = Math.floor(audio.currentTime / 60);
+    const curSec = Math.floor(audio.currentTime % 60);
+    const durMin = Math.floor(audio.duration / 60);
+    const durSec = Math.floor(audio.duration % 60);
+
+    currentTimeEl.textContent = `${curMin}:${curSec.toString().padStart(2, '0')}`;
+    durationEl.textContent = `${durMin}:${durSec.toString().padStart(2, '0')}`;
+  }
+}
+
+function setProgress(e) {
+  const width = progressContainer.clientWidth;
+  const clickX = e.offsetX;
+  audio.currentTime = (clickX / width) * audio.duration;
+}
+
+function changeVolume() {
+  audio.volume = volume.value;
+}
+
+function renderPlaylist() {
+  playlistEl.innerHTML = "";
+  songs.forEach((song, index) => {
+    const li = document.createElement("li");
+    li.textContent = `${song.title} - ${song.artist}`;
+    li.onclick = () => {
+      songIndex = index;
+      loadSong(songs[songIndex]);
+      playSong();
+    };
+    playlistEl.appendChild(li);
+  });
+}
+
+playBtn.addEventListener("click", () => (isPlaying ? pauseSong() : playSong()));
+nextBtn.addEventListener("click", nextSong);
+prevBtn.addEventListener("click", prevSong);
+audio.addEventListener("timeupdate", updateProgress);
+progressContainer.addEventListener("click", setProgress);
+volume.addEventListener("input", changeVolume);
+audio.addEventListener("ended", nextSong);
+
+loadSong(songs[songIndex]);
+renderPlaylist();
+</script>
+
+</body>
+</html>
